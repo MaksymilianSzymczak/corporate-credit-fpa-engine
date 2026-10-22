@@ -42,8 +42,7 @@ An end-to-end quantitative financial analytics platform combining **Corporate Cr
 
 ```bash
 # Clone the repository
-git clone [https://github.com/MaksymilianSzymczak/corporate-credit-fpa-engine.git](https://github.com/MaksymilianSzymczak/corporate-credit-fpa-engine.git)
-cd corporate-credit-fpa-engine
+git clone https://github.com/MaksymilianSzymczak/corporate-credit-fpa-engine.git
 
 # Install required dependencies
 pip install -r requirements.txt
