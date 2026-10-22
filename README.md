@@ -1,5 +1,10 @@
 # Corporate Credit Risk, Debt Capacity & FP&A Variance Engine
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ms-corporate-credit-fpa-engine.streamlit.app/)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/MaksymilianSzymczak/corporate-credit-fpa-engine)
+
+> 🔗 **Interactive Live Demo:** [ms-corporate-credit-fpa-engine.streamlit.app](https://ms-corporate-credit-fpa-engine.streamlit.app/)
+
 An end-to-end quantitative financial analytics platform combining **Corporate Credit Analysis (GCB)**, **Financial Planning & P&L Variance Analytics (GF&BM)**, and **Machine Learning Credit Risk Modeling (Explainable AI / Basel IRB framework)**.
 
 ---
