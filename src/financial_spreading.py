@@ -10,13 +10,13 @@ class CreditSpreadingEngine:
       ebit: float,
       interest_expense: float,
       total_debt: float,
-      cash: float,
+      cash_and_equivalents: float,
+      accounts_receivable: float,  # Net Accounts Receivable (NAR)
+      marketable_securities: float,  # Marketable Securities (MS)
       cfo: float,
       capex: float,
       total_assets: float,
       current_assets: float,
-      inventory: float,
-      prepaid_expenses: float,  # Dodana pozycja bilansowa
       total_liabilities: float,
       current_liabilities: float,
       retained_earnings: float,
@@ -27,33 +27,34 @@ class CreditSpreadingEngine:
     self.ebit = ebit
     self.interest_expense = interest_expense
     self.total_debt = total_debt
-    self.cash = cash
+    self.cash = cash_and_equivalents
+    self.accounts_receivable = accounts_receivable
+    self.marketable_securities = marketable_securities
     self.cfo = cfo
     self.capex = capex
     self.total_assets = total_assets
     self.current_assets = current_assets
-    self.inventory = inventory
-    self.prepaid_expenses = prepaid_expenses
     self.total_liabilities = total_liabilities
     self.current_liabilities = current_liabilities
     self.retained_earnings = retained_earnings
     self.market_value_equity = market_value_equity
 
-    # Wyprowadzone wielkości fundamentalne
-    self.net_debt = max(0.0, self.total_debt - self.cash)
+    # Pozycje wyprowadzone
+    self.net_debt = max(
+        0.0, self.total_debt - (self.cash + self.marketable_securities)
+    )
     self.free_cash_flow = self.cfo - self.capex
     self.working_capital = self.current_assets - self.current_liabilities
 
-    # Pełny formalny wzór Quick Ratio
-    quick_assets = self.current_assets - self.inventory - self.prepaid_expenses
+    # ADDYTYWNE QUICK ASSETS: Cash + CE + MS + NAR
+    self.quick_assets = (
+        self.cash + self.marketable_securities + self.accounts_receivable
+    )
     self.quick_ratio = (
-        quick_assets / self.current_liabilities
+        self.quick_assets / self.current_liabilities
         if self.current_liabilities > 0
         else np.nan
     )
-
-  def calculate_quick_ratio(self) -> float:
-    return self.quick_ratio
 
   def calculate_raw_features(self) -> dict:
     net_debt_to_ebitda = (
@@ -117,8 +118,8 @@ class CreditSpreadingEngine:
         'FCF Conversion Rate': f"{round(raw['FCF_Conversion_Rate'], 1)}%",
         'Altman Z-Score': round(raw['Altman_Z_Score'], 2),
         'Quick Ratio': round(raw['Quick_Ratio'], 2),
+        'Quick Assets (EUR M)': round(self.quick_assets, 2),
         'Working Capital (EUR M)': round(self.working_capital, 2),
-        'Free Cash Flow (EUR M)': round(self.free_cash_flow, 2),
     }
 
   def get_model_features(self) -> dict:
@@ -129,19 +130,4 @@ class CreditSpreadingEngine:
         'FCF_Conversion_Rate': round(raw['FCF_Conversion_Rate'], 4),
         'Altman_Z_Score': round(raw['Altman_Z_Score'], 4),
         'Quick_Ratio': round(raw['Quick_Ratio'], 4),
-    }
-
-  def calculate_debt_capacity(
-      self, covenant_max_net_debt_ebitda: float = 3.5
-  ) -> dict:
-    max_allowable_net_debt = self.ebitda * covenant_max_net_debt_ebitda
-    additional_debt_headroom = max_allowable_net_debt - self.net_debt
-    return {
-        'Covenant Threshold': f'{covenant_max_net_debt_ebitda}x',
-        'Current Net Debt': round(self.net_debt, 2),
-        'Max Net Debt Allowed': round(max_allowable_net_debt, 2),
-        'Additional Debt Capacity (Headroom)': round(
-            additional_debt_headroom, 2
-        ),
-        'Covenant Breach': self.net_debt > max_allowable_net_debt,
     }
