@@ -16,6 +16,7 @@ class CreditSpreadingEngine:
       total_assets: float,
       current_assets: float,
       inventory: float,
+      prepaid_expenses: float,  # Dodana pozycja bilansowa
       total_liabilities: float,
       current_liabilities: float,
       retained_earnings: float,
@@ -32,6 +33,7 @@ class CreditSpreadingEngine:
     self.total_assets = total_assets
     self.current_assets = current_assets
     self.inventory = inventory
+    self.prepaid_expenses = prepaid_expenses
     self.total_liabilities = total_liabilities
     self.current_liabilities = current_liabilities
     self.retained_earnings = retained_earnings
@@ -42,31 +44,35 @@ class CreditSpreadingEngine:
     self.free_cash_flow = self.cfo - self.capex
     self.working_capital = self.current_assets - self.current_liabilities
 
-  def calculate_raw_features(self) -> dict:
-    """Oblicza dokładne wartości liczbowe wskaźników zgodnie z teorią ekonomiczną."""
-    # 1. Dźwignia finansowa
-    gross_leverage = (
-        self.total_debt / self.ebitda if self.ebitda > 0 else np.nan
+    # Pełny formalny wzór Quick Ratio
+    quick_assets = self.current_assets - self.inventory - self.prepaid_expenses
+    self.quick_ratio = (
+        quick_assets / self.current_liabilities
+        if self.current_liabilities > 0
+        else np.nan
     )
+
+  def calculate_quick_ratio(self) -> float:
+    return self.quick_ratio
+
+  def calculate_raw_features(self) -> dict:
     net_debt_to_ebitda = (
         self.net_debt / self.ebitda if self.ebitda > 0 else np.nan
     )
-
-    # 2. Interest Coverage Ratio = EBIT / Interest Expense
-    interest_coverage_ratio = (
+    gross_leverage = (
+        self.total_debt / self.ebitda if self.ebitda > 0 else np.nan
+    )
+    interest_coverage = (
         self.ebit / self.interest_expense
         if self.interest_expense > 0
         else np.nan
     )
-
-    # 3. FCF Conversion Rate = (Free Cash Flow / EBITDA) * 100
-    fcf_conversion_rate = (
+    fcf_conversion = (
         (self.free_cash_flow / self.ebitda) * 100.0
         if self.ebitda > 0
         else np.nan
     )
 
-    # 4. Altman Z-Score = 1.2*X1 + 1.4*X2 + 3.3*X3 + 0.6*X4 + 1.0*X5
     x1 = (
         self.working_capital / self.total_assets
         if self.total_assets > 0
@@ -84,32 +90,23 @@ class CreditSpreadingEngine:
         else 0.0
     )
     x5 = self.sales / self.total_assets if self.total_assets > 0 else 0.0
-
-    altman_z_score = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 1.0 * x5
-
-    # 5. Quick Ratio = (Current Assets - Inventory) / Current Liabilities
-    quick_ratio = (
-        (self.current_assets - self.inventory) / self.current_liabilities
-        if self.current_liabilities > 0
-        else np.nan
-    )
+    altman_z = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 1.0 * x5
 
     return {
-        'Total_Debt_to_EBITDA': gross_leverage,
         'Net_Debt_to_EBITDA': net_debt_to_ebitda,
-        'Interest_Coverage_Ratio': interest_coverage_ratio,
-        'FCF_Conversion_Rate': fcf_conversion_rate,
-        'Altman_Z_Score': altman_z_score,
-        'Quick_Ratio': quick_ratio,
-        'X1_Working_Capital_to_Assets': x1,
-        'X2_Retained_Earnings_to_Assets': x2,
-        'X3_EBIT_to_Assets': x3,
-        'X4_Market_Equity_to_Liabilities': x4,
-        'X5_Sales_to_Assets': x5,
+        'Interest_Coverage_Ratio': interest_coverage,
+        'FCF_Conversion_Rate': fcf_conversion,
+        'Altman_Z_Score': altman_z,
+        'Quick_Ratio': self.quick_ratio,
+        'Total_Debt_to_EBITDA': gross_leverage,
+        'X1': x1,
+        'X2': x2,
+        'X3': x3,
+        'X4': x4,
+        'X5': x5,
     }
 
   def calculate_metrics(self) -> dict:
-    """Zwraca sformatowane wskaźniki do prezentacji w interfejsie."""
     raw = self.calculate_raw_features()
     return {
         'Net Debt / EBITDA': round(raw['Net_Debt_to_EBITDA'], 2),
@@ -125,7 +122,6 @@ class CreditSpreadingEngine:
     }
 
   def get_model_features(self) -> dict:
-    """Zwraca słownik zmiennych (features) gotowy do podania do modelu PD."""
     raw = self.calculate_raw_features()
     return {
         'Net_Debt_to_EBITDA': round(raw['Net_Debt_to_EBITDA'], 4),
@@ -140,7 +136,6 @@ class CreditSpreadingEngine:
   ) -> dict:
     max_allowable_net_debt = self.ebitda * covenant_max_net_debt_ebitda
     additional_debt_headroom = max_allowable_net_debt - self.net_debt
-
     return {
         'Covenant Threshold': f'{covenant_max_net_debt_ebitda}x',
         'Current Net Debt': round(self.net_debt, 2),
