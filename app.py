@@ -12,7 +12,7 @@ st.set_page_config(
 
 st.title('Corporate Credit Risk , Debt Capacity & P&L Variance Engine')
 st.caption(
-    'Global Corporate Banking & Global Finance Analytics Platform'
+    'Analytics Platform'
 )
 
 st.sidebar.header('Actual Financials (EUR M)')
