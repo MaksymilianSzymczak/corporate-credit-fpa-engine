@@ -5,6 +5,7 @@ from sklearn.linear_model import LogisticRegression
 
 
 class CreditRiskPDModel:
+  """Calibrated probability of default (PD) classifier with SHAP explainability."""
 
   def __init__(self):
     self.model = LogisticRegression(penalty='l2', C=1.0, random_state=42)
@@ -20,33 +21,28 @@ class CreditRiskPDModel:
 
   def generate_synthetic_training_data(self, n_samples: int = 1500):
     np.random.seed(42)
-    net_debt_to_ebitda = np.random.normal(loc=2.8, scale=1.5, size=n_samples)
-    interest_coverage_ratio = np.random.normal(
-        loc=4.5, scale=2.5, size=n_samples
-    )
-    # FCF Conversion Rate wyrażony w procentach: (FCF / EBITDA) * 100
-    fcf_conversion_rate = np.random.normal(
-        loc=35.0, scale=25.0, size=n_samples
-    )
-    altman_z_score = np.random.normal(loc=2.5, scale=1.0, size=n_samples)
+    net_debt_ebitda = np.random.normal(loc=2.8, scale=1.5, size=n_samples)
+    interest_coverage = np.random.normal(loc=4.5, scale=2.5, size=n_samples)
+    fcf_conversion = np.random.normal(loc=35.0, scale=25.0, size=n_samples)
+    altman_z = np.random.normal(loc=2.5, scale=1.0, size=n_samples)
     quick_ratio = np.random.normal(loc=1.2, scale=0.5, size=n_samples)
 
     log_odds = (
         -4.2
-        + 0.85 * net_debt_to_ebitda
-        - 0.45 * interest_coverage_ratio
-        - 0.015 * fcf_conversion_rate
-        - 0.90 * altman_z_score
+        + 0.85 * net_debt_ebitda
+        - 0.45 * interest_coverage
+        - 0.015 * fcf_conversion
+        - 0.90 * altman_z
         - 0.80 * quick_ratio
     )
-    prob_default = 1 / (1 + np.exp(-log_odds))
+    prob_default = 1.0 / (1.0 + np.exp(-log_odds))
     y = np.random.binomial(1, prob_default)
 
     return pd.DataFrame({
-        'Net_Debt_to_EBITDA': net_debt_to_ebitda,
-        'Interest_Coverage_Ratio': interest_coverage_ratio,
-        'FCF_Conversion_Rate': fcf_conversion_rate,
-        'Altman_Z_Score': altman_z_score,
+        'Net_Debt_to_EBITDA': net_debt_ebitda,
+        'Interest_Coverage_Ratio': interest_coverage,
+        'FCF_Conversion_Rate': fcf_conversion,
+        'Altman_Z_Score': altman_z,
         'Quick_Ratio': quick_ratio,
         'Default': y,
     })
