@@ -1,4 +1,5 @@
 class MacroStressSimulator:
+  """Simulates macroeconomic adverse shocks on corporate solvency and liquidity."""
 
   def __init__(
       self,
@@ -28,7 +29,6 @@ class MacroStressSimulator:
     stressed_interest = self.base_interest + additional_interest
 
     stressed_leverage = self.base_debt / stressed_ebitda
-    # Poprawiony wzór ICR w stress-teście: EBIT / Interest Expense
     stressed_icr = (
         stressed_ebit / stressed_interest if stressed_interest > 0 else 0.0
     )
@@ -38,8 +38,6 @@ class MacroStressSimulator:
         'Stressed EBIT': round(stressed_ebit, 2),
         'Stressed Interest Expense': round(stressed_interest, 2),
         'Stressed Net Debt / EBITDA': round(stressed_leverage, 2),
-        'Stressed Interest Coverage Ratio (EBIT / Interest)': round(
-            stressed_icr, 2
-        ),
+        'Stressed Interest Coverage (EBIT / Interest)': round(stressed_icr, 2),
         'Covenant Breach Risk': stressed_leverage > covenant_threshold,
     }
