@@ -25,7 +25,7 @@ interest = st.sidebar.number_input('Interest Expense (Actual)', value=14.0)
 cfo = st.sidebar.number_input('Operating Cash Flow (CFO)', value=65.0)
 capex = st.sidebar.number_input('CapEx', value=25.0)
 total_assets = st.sidebar.number_input('Total Assets', value=600.0)
-total_liabilities = st.sidebar.number_input('Total Liabilities', value=320.0)
+current_liabilities = st.sidebar.number_input('Current Liabilities', value=320.0)
 working_capital = st.sidebar.number_input('Working Capital', value=75.0)
 retained_earnings = st.sidebar.number_input('Retained Earnings', value=140.0)
 
@@ -38,7 +38,7 @@ engine = CreditSpreadingEngine(
     cfo,
     capex,
     total_assets,
-    total_liabilities,
+    current_liabilities,
     retained_earnings,
     working_capital,
     ebit,
